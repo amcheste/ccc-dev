@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+spec:
+  replicas: 1
+  # hostPort 80 can exist once per node; a rolling update deadlocks
+  # on a single-node kind cluster, so replace instead.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik
+    spec:
+      serviceAccountName: traefik
+      nodeSelector:
+        ingress-ready: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: traefik
+          image: traefik:v3.5
+          args:
+            - --entrypoints.web.address=:80
+            - --providers.kubernetesingress=true
+            - --log.level=INFO
+          ports:
+            - name: web
+              containerPort: 80
+              # Bound on the node; kind maps it to the host (see
+              # kind-config.yaml extraPortMappings).
+              hostPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
