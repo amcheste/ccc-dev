@@ -9,3 +9,11 @@ ci:
 docs:
   - changed-files:
     - any-glob-to-any-file: ['*.md', 'docs/**']
+
+manifests:
+  - changed-files:
+    - any-glob-to-any-file: ['manifests/**', 'kind-config.yaml']
+
+scripts:
+  - changed-files:
+    - any-glob-to-any-file: ['scripts/**', 'Makefile']

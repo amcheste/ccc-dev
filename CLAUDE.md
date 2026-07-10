@@ -6,7 +6,28 @@ This file is read by Claude Code at the start of every session in this repo.
 
 ## About This Repo
 
-<!-- TODO: describe what this project does -->
+Local integration harness for the Command and Control Center (CCC):
+`make up` runs the whole platform (Traefik, Postgres, every service
+built from its local sibling checkout under `~/Repos/amcheste/`) on a
+kind cluster named `ccc`, served at http://ccc.localhost.
+
+Rules that matter here:
+
+- This repo owns only shared glue: kind config, Traefik, local
+  Postgres, ingress routes. Service deploy config stays in each
+  service repo's `deploy/kind` overlay; `up.sh` calls their
+  `kind-deploy` targets rather than duplicating anything.
+- Never commit credentials, even dev ones. The Postgres secret is
+  generated at runtime by `scripts/up.sh`.
+- The cluster name is `ccc`, shared with the service repos' own
+  `make kind-up` targets, but only ccc-dev's kind-config maps host
+  port 80. `up.sh` detects a cluster created without the mapping and
+  asks for `make down` first.
+- Ingress routing must stay rewrite-free and same-origin
+  (`/api/<service>` prefixes), mirroring the homelab ingress in
+  ccc-deploy; auth cookie behavior depends on it.
+- Shell scripts must pass shellcheck; manifests must pass yamllint
+  (both enforced by CI).
 
 ---
 

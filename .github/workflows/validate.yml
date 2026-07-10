@@ -46,21 +46,30 @@ jobs:
             || echo "source=false" >> "$GITHUB_OUTPUT"
 
   # ── Lint ───────────────────────────────────────────────────────────────────
-  # Customise this job for your project's language/toolchain.
-  # Examples:
-  #   Shell:      shellcheck **/*.sh
-  #   Go:         go vet ./... && golangci-lint run
-  #   Python:     ruff check . && mypy .
-  #   Node:       npm run lint
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Lint
+      - name: Shellcheck
+        run: shellcheck scripts/*.sh
+
+      - name: Install yamllint
+        run: pip install --user yamllint
+
+      - name: Yamllint manifests
+        run: ~/.local/bin/yamllint manifests/ kind-config.yaml
+
+      - name: Forbid committed Secret manifests
         run: |
-          echo "TODO: add lint steps for this project"
+          # Even local-dev credentials are generated at runtime, never
+          # committed (see scripts/up.sh).
+          if grep -rn --include='*.yaml' --include='*.yml' -E '^kind:[[:space:]]+Secret[[:space:]]*$' .; then
+            echo "Secret manifests are not allowed in this repo."
+            exit 1
+          fi
+          echo "No Secret manifests found ✓"
 
   # ── Commit Lint (PRs only) ──────────────────────────────────────────────────
   commit-lint:
