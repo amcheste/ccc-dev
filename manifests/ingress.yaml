@@ -1,0 +1,28 @@
+# Same-origin routing is the point: UI and API share one hostname so
+# the HttpOnly refresh cookie needs no CORS and no rewrites. Prefix
+# routing without path rewriting mirrors the future homelab ingress.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ccc
+  namespace: ccc
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ccc.localhost
+      http:
+        paths:
+          - path: /api/account
+            pathType: Prefix
+            backend:
+              service:
+                name: account-service
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ccc-web
+                port:
+                  name: http

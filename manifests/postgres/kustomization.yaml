@@ -1,0 +1,12 @@
+# Throwaway local Postgres: plain container + emptyDir, deliberately
+# NOT the CloudNativePG operator the homelab runs. The operator earns
+# nothing on a disposable cluster. Credentials are generated at
+# runtime by scripts/up.sh, never committed.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ccc
+
+resources:
+  - deployment.yaml
+  - service.yaml
