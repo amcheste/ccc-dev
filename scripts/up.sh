@@ -45,6 +45,15 @@ if ! kubectl --context "$CTX" -n ccc get secret postgres-credentials >/dev/null 
     --from-literal=username=ccc \
     --from-literal=password="$(openssl rand -hex 16)"
 fi
+if ! kubectl --context "$CTX" -n ccc get secret account-service-keys >/dev/null 2>&1; then
+  # JWT signing seed plus the first-admin bootstrap password.
+  # Retrieve the login password any time with:
+  #   kubectl -n ccc get secret account-service-keys \
+  #     -o jsonpath='{.data.bootstrap-admin-password}' | base64 -d
+  kubectl --context "$CTX" -n ccc create secret generic account-service-keys \
+    --from-literal=jwt-signing-seed="$(openssl rand -base64 32)" \
+    --from-literal=bootstrap-admin-password="$(openssl rand -hex 12)"
+fi
 kubectl --context "$CTX" apply -k "$ROOT/manifests/postgres"
 
 for repo in "${SERVICES[@]}"; do
@@ -60,9 +69,10 @@ kubectl --context "$CTX" -n ccc rollout status deploy/postgres --timeout=120s
 
 echo
 echo "CCC is up: http://ccc.localhost"
-echo "  UI   -> ccc-web (sign-in needs the account service REST API,"
-echo "          which lands with its implementation PRs)"
-echo "  API  -> http://ccc.localhost/api/account/*"
+echo "  Sign in as 'alan'. Retrieve the bootstrap password with:"
+echo "    kubectl --context $CTX -n ccc get secret account-service-keys \\"
+echo "      -o jsonpath='{.data.bootstrap-admin-password}' | base64 -d"
+echo "  (You will be asked to change it on first sign-in.)"
 echo
 echo "Roll one service after a code change:  make roll SVC=ccc-web"
 echo "Tear down:                             make down"
